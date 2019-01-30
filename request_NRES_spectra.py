@@ -15,6 +15,7 @@ __version__ = "1.1.5"
 
 ## Modules:
 import re
+import ast
 import signal
 import getopt
 import os
@@ -117,6 +118,7 @@ molmap = {       '--ENG':    'ENGINEERING',
 timer           = False
 vlevel          = 0
 #obs_note        = 'blablabla'
+cred_file       = "credentials.txt"
 contirmed       = True
 yesterday       = False
 obs_period      = None
@@ -146,9 +148,26 @@ constraints = {
         }
 #cadence_horizon_days = 2.0  # schedule this far in advance
 
+##--------------------------------------------------------------------------##
+##--------------------------------------------------------------------------##
+
 ## Valhalla, URLs, and related:
 req_urlbase = "http://lco.global/observe/request/"
-auth_token = 'aa63829a45739210d124c6ec1c7edb0d62e5e860'
+
+## Load credentials from external file (credentials.txt):
+if not os.path.isfile(cred_file):
+    sys.stderr.write("Error: credential file not found: %s\n" % cred_file)
+    sys.exit(1)
+try:
+    with open(cred_file, 'r') as f:
+       credentials = ast.literal_eval(f.read())
+    auth_token = credentials['auth_token']
+except:
+    sys.stderr.write("Failed to load credentials!!\n")
+    sys.exit(1)
+
+##--------------------------------------------------------------------------##
+##--------------------------------------------------------------------------##
 
 ## Guider mode:
 guider_args = {
