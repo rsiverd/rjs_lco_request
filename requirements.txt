@@ -1,0 +1,4 @@
+astropy==2.0.2
+astroquery==0.3.6.post2
+ephem==3.7.6.0
+requests==2.18.4
