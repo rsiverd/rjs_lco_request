@@ -22,8 +22,8 @@ import os
 import sys
 import time
 import numpy as np
-import httplib
-import urllib
+#import httplib
+#import urllib
 import json
 #import copy
 #import getpass
