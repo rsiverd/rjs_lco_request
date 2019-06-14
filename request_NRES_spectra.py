@@ -5,13 +5,13 @@
 #
 # Rob Siverd
 # Created:       2016-04-04
-# Last modified: 2019-01-30
+# Last modified: 2019-06-14
 #--------------------------------------------------------------------------
 #**************************************************************************
 #--------------------------------------------------------------------------
 
 ## Current version:
-__version__ = "1.1.5"
+__version__ = "1.1.6"
 
 ## Modules:
 import re
@@ -321,7 +321,7 @@ long_opts = ['filter=', 'nobjs=', 'targets=', 'Vmin=', 'Vmax=',
 ## GNU-style parsing (with exception handling):
 try:
     options, remainder = getopt.gnu_getopt(sys.argv[1:], short_opts, long_opts)
-except getopt.GetoptError, err:
+except getopt.GetoptError as err:
     sys.stderr.write("%s\n" % str(err))
     usage(sys.stderr)
     sys.exit(2)
