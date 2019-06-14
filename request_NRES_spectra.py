@@ -13,17 +13,22 @@
 ## Current version:
 __version__ = "1.1.6"
 
+## Python version-agnostic module reloading:
+try:
+    reload                              # Python 2.7
+except NameError:
+    try:
+        from importlib import reload    # Python 3.4+
+    except ImportError:
+        from imp import reload          # Python 3.0 - 3.3
+
 ## Modules:
 import re
 import ast
 import signal
 import getopt
-import os
-import sys
-import time
+import os, sys, time
 import numpy as np
-#import httplib
-#import urllib
 import json
 #import copy
 #import getpass
