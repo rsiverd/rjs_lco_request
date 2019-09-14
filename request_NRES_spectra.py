@@ -5,13 +5,13 @@
 #
 # Rob Siverd
 # Created:       2016-04-04
-# Last modified: 2019-06-14
+# Last modified: 2019-09-13
 #--------------------------------------------------------------------------
 #**************************************************************************
 #--------------------------------------------------------------------------
 
 ## Current version:
-__version__ = "1.1.6"
+__version__ = "1.1.7"
 
 ## Python version-agnostic module reloading:
 try:
@@ -33,6 +33,7 @@ import json
 #import copy
 #import getpass
 import requests
+_have_np_vers = float('.'.join(np.__version__.split('.')[:2]))
 
 import datetime as dt
 import ephem
@@ -543,8 +544,11 @@ else:
 ##--------------------------------------------------------------------------##
 #target_list = "./target_list_nres.txt"
 #hdr_txt = asc.get_headtext(target_list)
-all_object_data = np.genfromtxt(target_list, dtype=None, delimiter=',',
-        names=True, autostrip=True)
+gftkw = {'encoding':None} if (_have_np_vers >= 1.14) else {}
+gftkw.update({'names':True, 'autostrip':True, 'delimiter':','})
+#gftkw.update({'delimiter':'|', 'comments':'%0%0%0%0'})
+#gftkw.update({'loose':True, 'invalid_raise':False})
+all_object_data = np.genfromtxt(target_list, dtype=None, **gftkw)
 
 ## Impose magnitude limit:
 n_load = len(all_object_data)
