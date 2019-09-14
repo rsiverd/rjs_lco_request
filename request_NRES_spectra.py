@@ -11,7 +11,7 @@
 #--------------------------------------------------------------------------
 
 ## Current version:
-__version__ = "1.1.7"
+__version__ = "1.1.8"
 
 ## Python version-agnostic module reloading:
 try:
@@ -738,8 +738,6 @@ for entry in use_object_data:
         "proposal"          :                 proposal_id,
         #"type"              : "compound_request",
     }
-
-    sys.exit(1)
 
     # ------------------------------------------------
     # Submit:
