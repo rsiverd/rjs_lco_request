@@ -5,13 +5,13 @@
 #
 # Rob Siverd
 # Created:       2016-04-04
-# Last modified: 2019-09-13
+# Last modified: 2019-09-16
 #--------------------------------------------------------------------------
 #**************************************************************************
 #--------------------------------------------------------------------------
 
 ## Current version:
-__version__ = "1.1.8"
+__version__ = "1.2.0"
 
 ## Python version-agnostic module reloading:
 try:
@@ -128,6 +128,7 @@ cred_file       = "credentials.txt"
 contirmed       = True
 yesterday       = False
 obs_period      = None
+ipp_value       =  1.05
 night_hours     = 10.0
 #objs_per_night  = 12
 #objs_per_night  =  2
@@ -148,10 +149,12 @@ target_filter   = None          # to select target(s) by name
 python_strategy = False         # enables 'python' strategies (testing)
 nres_site_list  = [x for x in lsi.keys() if lsi[x]['nres_spec'] != None]
 target_list     = None
-constraints = {
-            'max_airmass'   :   4.0, 
-        'min_lunar_distance':   0.0,
-        }
+max_airmass     = 4.0
+min_moonsep     = 0.0
+#constraints = {
+#            'max_airmass'   :   4.0, 
+#        'min_lunar_distance':   0.0,
+#        }
 #cadence_horizon_days = 2.0  # schedule this far in advance
 
 ##--------------------------------------------------------------------------##
@@ -284,11 +287,19 @@ def usage(stream):
         + "   -C, --commissioning  use commissioning proposal and instrument\n"
         + "   -S, --science        use SCICAM instrument\n"
         + "   -K, --keyproj        use NRES key project proposal [optional]\n"
+        + "   -I, --ippvalue=VAL   specify request ipp value "
+        +                               "[def: %.2f]\n" % ipp_value
         + "\n"
         + "Site selection (REQ):\n"
         + "       --any            no site restriction for submitted requests\n"
         + "   -s, --site=SITE      restrict request to specific LCO site.\n"
         + "                           options: %s\n" % str(nres_site_list)
+        + "\n"
+        + "Other constraints:\n"
+        + "   -A, --airmass=VALUE  maximum allowable airmass"
+        +                                   " [def: %.1f]\n" % max_airmass
+        + "   -M, --moonsep=VALUE  minimum moon separation (degrees)"
+        +                                   " [def: %.1f]\n" % min_moonsep
         + "\n"
         + "Observation type (REQ):\n"
         + "       --ENG            submit ENGINEERING molecules (mwa ha ha)\n"
@@ -317,10 +328,11 @@ def usage(stream):
 ##--------------------------------------------------------------------------##
 
 ## Options:
-short_opts = 'f:n:t:CSKs:N:TYhqtv'
+short_opts = 'f:n:t:CSKI:s:A:M:N:TYhqtv'
 long_opts = ['filter=', 'nobjs=', 'targets=', 'Vmin=', 'Vmax=',
-            'commissioning', 'science', 'keyproj',
-            'any', 'site=', 'ENG', 'SPECTRUM', 'TEST', 'pystrat',
+            'commissioning', 'science', 'keyproj', 'ippvalue=',
+            'any', 'site=', 'airmass=', 'moondist=',
+            'ENG', 'SPECTRUM', 'TEST', 'pystrat',
             'nights=', 'today', 'yesterday',
             'debug', 'help', 'quiet', 'timer', 'verbose']
 
@@ -382,7 +394,16 @@ for opt, arg in options:
         key_project = True
         msg = NYELLOW + "Key project proposal selected!" + ENDC + "\n"
         sys.stderr.write(msg)
+    elif ((opt == '-I') or (opt == '--ippvalue')):
+        if not is_float(arg):
+            sys.stderr.write("Error!  Non-numeric IPP: '%s'\n\n" % arg)
+            sys.exit(1)
+        ipp_value = float(arg)
+        if (vlevel >= 0):
+            msg = "Submitting with IPP value: %f" % ipp_value
+            sys.stderr.write(NYELLOW + msg + ENDC + "\n")
     # ------------------------------------------------
+    # Site constraints:
     elif ((opt == '--any')):
         site_choice = 'any'
         if (vlevel >= 0):
@@ -398,6 +419,32 @@ for opt, arg in options:
             msg = "Requests restricted to: " + arg
             sys.stderr.write(NYELLOW + msg + ENDC + "\n")
     # ------------------------------------------------
+    # Maximum airmass:
+    elif ((opt == "-A") or (opt == '--airmass')):
+        if not is_float(arg):
+            sys.stderr.write("Error: non-numeric airmass given: %s\n" % arg)
+            sys.exit(1)
+        max_airmass = float(arg)
+        if (max_airmass < 1.0):
+            sys.stderr.write("Error: illegal airmass: %.3f\n" % max_airmass)
+            sys.stderr.write("Only values >= 1.0 are allowed!\n")
+            sys.exit(1)
+        if (vlevel >= 0):
+            msg = "Using maximum airmass: %.2f" % max_airmass
+            sys.stderr.write(NYELLOW + msg + ENDC + "\n")
+    elif ((opt == "-M") or (opt == '--moondist')):
+        if not is_float(arg):
+            sys.stderr.write("Error: non-numeric moon distance: %s\n" % arg)
+            sys.exit(1)
+        min_moonsep = float(arg)
+        #if (min_moonsep < 1.0):
+        #    sys.stderr.write("Error: illegal airmass: %.3f\n" % max_airmass)
+        #    sys.stderr.write("Only values >= 1.0 are allowed!\n")
+        #    sys.exit(1)
+        if (vlevel >= 0):
+            msg = "Using minimum moon separation: %.2f" % min_moonsep
+            sys.stderr.write(NYELLOW + msg + ENDC + "\n")
+    # ------------------------------------------------
     elif (opt in ['--ENG', '--SPECTRUM', '--TEST']):
         nres_type = molmap.get(opt)
         molecule_defaults['type'] = nres_type
@@ -407,7 +454,6 @@ for opt, arg in options:
         python_strategy = True
         msg = NYELLOW + "WARNING: Python strategies invoked!" + ENDC + "\n"
         sys.stderr.write(msg)
-
     # ------------------------------------------------
     elif ((opt == '-N') or (opt == '--nights')):
         if not is_integer(arg):
@@ -454,6 +500,12 @@ if (vlevel >= 1):
 if (vlevel >= 2):
     sys.stderr.write("%s\nFull command line:%s\n" % (NCYAN, ENDC))
     sys.stderr.write("   %s\n" % sys.argv)
+
+## Collect constraints:
+constraints = {
+               'max_airmass':   max_airmass,
+        'min_lunar_distance':   min_moonsep,
+        }
 
 ##--------------------------------------------------------------------------##
 ##                          Input sanity checks:                            ##
@@ -728,7 +780,6 @@ for entry in use_object_data:
         "windows" : [window],
     }
 
-    ipp_value = 1.05
     new_user_request = {
         "group_id"          : "NRES: %s" % target['name'],
         "ipp_value"         :                   ipp_value,
