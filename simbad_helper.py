@@ -11,7 +11,7 @@
 #--------------------------------------------------------------------------
 
 ## Current version:
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 
 ## Modules:
 import os
@@ -116,6 +116,8 @@ class NRES_Lookup(object):
                 target[datum] = 0.0
         if len(target['sptype']) == 0:
             target['sptype'] = 'unknown'
+        if hasattr(target['sptype'], 'decode'):
+            target['sptype'] = target['sptype'].decode()
 
         # Add exposure time:
         target['exptime'] = self._expcalc(target['Vmag'])
