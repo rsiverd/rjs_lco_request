@@ -5,13 +5,13 @@
 #
 # Rob Siverd
 # Created:       2018-01-02
-# Last modified: 2019-09-16
+# Last modified: 2019-09-17
 #--------------------------------------------------------------------------
 #**************************************************************************
 #--------------------------------------------------------------------------
 
 ## Current version:
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 
 ## Modules:
 import os
@@ -19,6 +19,18 @@ import sys
 import time
 import numpy as np
 from collections import OrderedDict
+
+## Because obviously:
+import warnings
+#if not sys.warnoptions:
+#    warnings.simplefilter("ignore", category=AstropyDeprecationWarning)
+#    warnings.simplefilter("ignore", category=UserWarning)
+#    warnings.simplefilter("ignore")
+#with warnings.catch_warnings():
+#    some_risky_activity()
+#with warnings.catch_warnings():
+#    warnings.filterwarnings("ignore", category=DeprecationWarning)
+#    import problem_child1, problem_child2
 
 ## Need astropy:
 try:
@@ -29,7 +41,9 @@ except ImportError:
 
 ## Need astroquery:
 try:
-    from astroquery.simbad import Simbad
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore")
+        from astroquery.simbad import Simbad
 except ImportError:
     sys.stderr.write("Module 'astroquery' not found!  Install and retry ...\n")
     sys.exit(1)
