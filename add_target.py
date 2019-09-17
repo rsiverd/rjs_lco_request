@@ -5,13 +5,13 @@
 #
 # Rob Siverd
 # Created:       2018-05-01
-# Last modified: 2018-07-14
+# Last modified: 2019-09-16
 #--------------------------------------------------------------------------
 #**************************************************************************
 #--------------------------------------------------------------------------
 
 ## Current version:
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
 ## Python version-agnostic module reloading:
 try:
@@ -108,46 +108,66 @@ def pick_inliers(data, sig_thresh):
 
 ##--------------------------------------------------------------------------##
 ## Parse arguments and run script:
+class MyParser(argparse.ArgumentParser):
+    def error(self, message):
+        sys.stderr.write('error: %s\n' % message)
+        self.print_help()
+        sys.exit(2)
+
+## Enable raw text AND display of defaults:
+class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter,
+                        argparse.RawDescriptionHelpFormatter):
+    pass
+
 if __name__ == '__main__':
 
     # ------------------------------------------------------------------
+    prog_name = os.path.basename(__file__)
     descr_txt = """
     Look up object by name using SIMBAD. Append object to target list.
-    
+
     Version: %s
     """ % __version__
     parser = argparse.ArgumentParser(
             prog=os.path.basename(__file__),
             description=descr_txt)
+    parser = MyParser(prog=prog_name, description=descr_txt,
+                          formatter_class=argparse.RawTextHelpFormatter)
+    # ------------------------------------------------------------------
     parser.add_argument('lookup_name', help='name for SIMBAD lookup')
     parser.add_argument('target_name', help='target name in database')
-    parser.add_argument('-o', '--output_file', default=None,
-            help='Target list object should append to')
-    parser.add_argument('--debug', dest='debug', default=False,
-             help='Enable extra debugging messages', action='store_true')
-    parser.add_argument('-q', '--quiet', action='count', default=0)
-    parser.add_argument('-v', '--verbose', action='count', default=0)
+    #parser.add_argument('--debug', dest='debug', default=False,
+    #         help='Enable extra debugging messages', action='store_true')
+    #parser.add_argument('-q', '--quiet', action='count', default=0)
+    #parser.add_argument('-v', '--verbose', action='count', default=0)
     #parser.add_argument('remainder', help='other stuff', nargs='*')
     # ------------------------------------------------------------------
-    #ofgroup = parser.add_argument_group('Output format')
-    #fmtparse = ofgroup.add_mutually_exclusive_group()
-    #fmtparse.add_argument('--python', required=False, dest='output_mode',
-    #        help='Return Python dictionary with results [default]',
-    #        default='pydict', action='store_const', const='pydict')
-    #bash_var = 'ARRAY_NAME'
-    #bash_msg = 'output Bash code snippet (use with eval) to declare '
-    #bash_msg += 'an associative array %s containing results' % bash_var
-    #fmtparse.add_argument('--bash', required=False, default=None,
-    #        help=bash_msg, dest='bash_array', metavar=bash_var)
+    # Output control:
+    iogroup = parser.add_argument_group('Output formatting')
+    iogroup.add_argument('-H', '--header', default=False,
+            help='include CSV header in output', action='store_true')
+    iogroup.add_argument('-o', '--output_file', default=None,
+            help='Target list object should append to (NOT IMPLEMENTED)')
+    # ------------------------------------------------------------------
+    # Miscellany:
+    #miscgroup = parser.add_argument_group('Miscellany')
+    #miscgroup.add_argument('--debug', dest='debug', default=False,
+    #        help='Enable extra debugging messages', action='store_true')
+    #miscgroup.add_argument('-q', '--quiet', action='count', default=0,
+    #        help='less progress/status reporting')
+    #miscgroup.add_argument('-v', '--verbose', action='count', default=0,
+    #        help='more progress/status reporting')
     # ------------------------------------------------------------------
 
     context = parser.parse_args()
-    #context.vlevel = context.verbose - context.quiet
-    context.vlevel = 99 if context.debug else (context.verbose-context.quiet)
+    #context.vlevel = 99 if context.debug else (context.verbose-context.quiet)
 
     result = nrl.fetch_simbad(context.lookup_name, context.target_name)
     fmtobj = nrl.targ2csv(result)
-    sys.stderr.write("result:\n")
+    #sys.stderr.write("result:\n")
+    if context.header:
+        hdrtxt = nrl.targ2header(result)
+        sys.stdout.write("%s\n" % hdrtxt)
     sys.stdout.write("%s\n" % fmtobj)
 
     # If output given, append to target list:
