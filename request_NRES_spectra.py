@@ -590,6 +590,8 @@ if key_project:
     proposal_id    = 'KEY2017AB-002a'    # NRES key project
 else:
     proposal_id    = 'ENG2017AB-001'     # NRES commissioning
+proposal_id = 'LCO2019B-010'
+#proposal_id = 'LCO2019B-010-TC'
 
 ##--------------------------------------------------------------------------##
 ##--------------------------------------------------------------------------##
